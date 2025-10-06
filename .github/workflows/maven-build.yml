@@ -45,9 +45,12 @@ jobs:
         run: jf mvn -B test 
       - name: Build docker image with spring boot plugin
         run: jf mvn -B spring-boot:build-image -DskipTests
+      - name: Set Release version env variable
+        run: |
+          echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: Publish Image to JFrog Artifactory
         env:
-          IMAGE_NAME: clinic-docker/petclinic:${{ github.run_number }}
+          IMAGE_NAME: clinic-docker/petclinic:${{ env.RELEASE_VERSION }}
         run: |
           docker login -u ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} -p ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} trialyin7lg.jfrog.io
           docker push $IMAGE_NAME
