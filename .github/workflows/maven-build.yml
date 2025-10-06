@@ -52,7 +52,7 @@ jobs:
         env:
           IMAGE_NAME: clinic-docker/petclinic:${{ env.RELEASE_VERSION }}
         run: |
-          jf docker login my-jfrog-server
+          jf docker login
           jf docker push $IMAGE_NAME
       - name: Run Jfrog
         run: |
