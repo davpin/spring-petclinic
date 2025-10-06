@@ -243,7 +243,8 @@
         </executions>
         <configuration>
           <image>
-            <name>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</name>
+             <name>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</name>
+             <tags>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</tags>
           </image>
         </configuration>
       </plugin>
