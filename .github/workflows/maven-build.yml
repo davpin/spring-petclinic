@@ -37,8 +37,8 @@ jobs:
           oidc-provider-name: davpin/spring-petclinic@github
       - name: Configure JFrog CLI
         run: |
-          jf c add my-jfrog-server --url $JF_URL --access-token ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} --interactive=false
-          jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --interactive=false
+          jf c add my-jfrog-server --url $JF_URL --access-token ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} 
+          jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --use-wrapper=true
       - name: Compile with Maven Wrapper
         run: jf mvn compile --interactive=false
       - name: Run tests with Maven Wrapper
