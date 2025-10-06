@@ -33,6 +33,7 @@ jobs:
         env:
           # JFrog platform url (for example: https://acme.jfrog.io)
           JF_URL: ${{ vars.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
         with:
           oidc-provider-name: davpin/spring-petclinic@github
       - name: Configure JFrog CLI
@@ -52,9 +53,11 @@ jobs:
         env:
           IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/petclinic:${{ env.RELEASE_VERSION }}
         run: |
-          jf docker login trialyin7lg.jfrog.io --server-id my-jfrog-server
+          jf docker login trialyin7lg.jfrog.io --server-id my-jfrog-server --username=${{ steps.setup-jfrog-cli.outputs.oidc-user }} --password=${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} 
           jf docker push $IMAGE_NAME
       - name: Run Jfrog
         run: |
           jf rt ping
           jf rt bce
+          jf rt build-add-git
+          jf rt build-publish
