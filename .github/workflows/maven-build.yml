@@ -35,12 +35,22 @@ jobs:
           JF_URL: ${{ vars.JF_URL }}
         with:
           oidc-provider-name: davpin/spring-petclinic@github
+      - name: Configure JFrog CLI
+        run: |
+          jf c add my-jfrog-server --url $JF_URL --access-token ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} --interactive=false
+          jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --interactive=false
       - name: Compile with Maven Wrapper
-        run: ./mvnw -B compile
+        run: jf mvn compile --interactive=false
       - name: Run tests with Maven Wrapper
-        run: ./mvnw -B test
+        run: jf mvn test --interactive=false
       - name: Build docker image with spring boot plugin
-        run: ./mvnw -B spring-boot:build-image
+        run: jf mvn spring-boot:build-image --interactive=false
+      - name: Publish Image to JFrog Artifactory
+        env:
+          IMAGE_NAME: clinic-docker/petclinic:${{ github.run_number }}
+        run: |
+          docker login -u ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} -p ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} trialyin7lg.jfrog.io
+          docker push $IMAGE_NAME
       - name: Run Jfrog
         run: |
           jf rt ping
