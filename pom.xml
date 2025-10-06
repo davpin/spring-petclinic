@@ -237,6 +237,9 @@
                 <java.source>${java.version}</java.source>
                 <java.target>${java.version}</java.target>
               </additionalProperties>
+              <image>
+                <name>clinic-docker/${project.artifactId}:${project.version}</name>
+              </image>
             </configuration>
           </execution>
         </executions>
