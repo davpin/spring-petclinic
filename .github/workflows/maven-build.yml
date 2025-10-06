@@ -41,16 +41,19 @@ jobs:
           jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --use-wrapper=true
       - name: Compile with jfrog cli
         run: jf mvn -B compile 
-      - name: Run tests with Maven Wrapper
+      - name: Run tests with jfrog cli
         run: jf mvn -B test 
       - name: Build docker image with spring boot plugin
-        run: jf mvn -B spring-boot:build-image
+        run: jf mvn -B spring-boot:build-image -DskipTests
+      - name: Set Release version env variable
+        run: |
+          echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: Publish Image to JFrog Artifactory
         env:
-          IMAGE_NAME: clinic-docker/petclinic:${{ github.run_number }}
+          IMAGE_NAME: clinic-docker/petclinic:${{ env.RELEASE_VERSION }}
         run: |
-          docker login -u ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} -p ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} trialyin7lg.jfrog.io
-          docker push $IMAGE_NAME
+          jf docker login my-jfrog-server
+          jf docker push $IMAGE_NAME
       - name: Run Jfrog
         run: |
           jf rt ping
