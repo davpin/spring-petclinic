@@ -41,10 +41,10 @@ jobs:
           jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --use-wrapper=true
       - name: Compile with jfrog cli
         run: jf mvn -B compile 
-      - name: Run tests with Maven Wrapper
+      - name: Run tests with jfrog cli
         run: jf mvn -B test 
       - name: Build docker image with spring boot plugin
-        run: jf mvn -B spring-boot:build-image
+        run: jf mvn -B spring-boot:build-image -DskipTests
       - name: Publish Image to JFrog Artifactory
         env:
           IMAGE_NAME: clinic-docker/petclinic:${{ github.run_number }}
