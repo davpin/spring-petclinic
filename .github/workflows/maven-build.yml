@@ -14,6 +14,8 @@ permissions:
   id-token: write
   # This is required for actions/checkout
   contents: read
+  # Required for uploading code scanning.
+  security-events: write
 jobs:
   build:
 
@@ -37,6 +39,7 @@ jobs:
           # JFrog platform url (for example: https://acme.jfrog.io)
           JF_URL: ${{ vars.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           oidc-provider-name: davpin/spring-petclinic@github
       - name: Configure JFrog CLI
@@ -44,7 +47,6 @@ jobs:
           jf c add my-jfrog-server --url $JF_URL --access-token ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} 
           jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --use-wrapper=true
           jf docker login
-          docker images
       - name: Compile with jfrog cli
         run: jf mvn -B compile 
       - name: Run tests with jfrog cli
@@ -58,11 +60,15 @@ jobs:
         env:
           IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
         run: |
-          docker images
+          jf mvn install -DskipTests
           jf docker push $IMAGE_NAME
       - name: Run Jfrog
         run: |
-          jf rt ping
-          jf rt bce
+          jf scan
+          jf docker scan
+          # Collect environment variables for the build
+          jf rt build-collect-env
+          # Collect VCS details from git and add them to the build
           jf rt build-add-git
+          # Publish build info
           jf rt build-publish
