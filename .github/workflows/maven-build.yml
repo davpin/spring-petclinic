@@ -4,6 +4,8 @@
 name: Java CI with Maven
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
     types: [closed]
@@ -29,6 +31,7 @@ jobs:
           distribution: 'adopt'
           cache: maven
       - name: Setup JFrog CLI
+        id: setup-jfrog-cli
         uses: jfrog/setup-jfrog-cli@v4
         env:
           # JFrog platform url (for example: https://acme.jfrog.io)
