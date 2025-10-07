@@ -246,9 +246,6 @@
              <name>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</name>
              <tags>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</tags>
           </image>
-          <docker>
-						<host>trialyin7lg.jfrog.io</host>
-          </docker>
         </configuration>
       </plugin>
       <plugin>
