@@ -89,7 +89,7 @@ jobs:
           JFROG_CLI_LOG_LEVEL: DEBUG
         run: |
           #jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf build-scan $BUILD_NAME $BUILD_NUMBER --licenses
+          jf build-scan $BUILD_NAME $BUILD_NUMBER 
           jf docker scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
           # Publish build info
           jf rt build-publish $BUILD_NAME $BUILD_NUMBER --collect-env --collect-git-info --env-exclude "*password*;*secret*;*key*;*token*;*auth*"
