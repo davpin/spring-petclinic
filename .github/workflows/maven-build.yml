@@ -61,10 +61,10 @@ jobs:
       - name: Compile
         run: jf mvn -B compile --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Audit the code with JFrog Xray
-      - name: audit
-        run: jf audit --mvn --fail=true --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      - name: Audit
+        run: jf audit --mvn --fail=true --licenses --sca --sast --use-wrapper=true
       # Run the tests with JFrog CLI
-      - name: test 
+      - name: Test 
         run: jf mvn -B test --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Authenticate the docker cli. is this needed??
       - name: Authenticate Docker
@@ -74,7 +74,7 @@ jobs:
           username: ${{ steps.setup-jfrog-cli.outputs.oidc-user }}
           password: ${{ steps.setup-jfrog-cli.outputs.oidc-token }}
       # Build the docker image with spring boot maven plugin
-      - name: docker_image
+      - name: Docker_image
         run: |
           cat $HOME/.docker/config.json
           jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
