@@ -17,67 +17,78 @@ permissions:
   # Required for uploading code scanning.
   security-events: write
 jobs:
-  build:
-
+  ci:
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+      BUILD_NAME: 'spring-petclinic'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '17' ]
+        java: [ '25' ]
 
     steps:
+      # Checkout the code from the repository
       - uses: actions/checkout@v4
+      # Set up JDK
       - name: Set up JDK ${{matrix.java}}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{matrix.java}}
           distribution: 'adopt'
           cache: maven
+          cache-dependency-path: '**/pom.xml'
+      # Get the version from the pom.xml and set it as an environment variable
       - name: Set Release version env variable
         run: |
           echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+      # Setup JFrog CLI 
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: jfrog/setup-jfrog-cli@v4
         env:
-          # JFrog platform url (for example: https://acme.jfrog.io)
           JF_URL: ${{ vars.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           oidc-provider-name: davpin/spring-petclinic@github
+      # Configure JFrog CLI with our server details and configure maven and docker.
       - name: Configure JFrog CLI
         run: |
           jf c add my-jfrog-server --url $JF_URL --access-token ${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }} 
           jf mvnc --repo-resolve-releases java-libs-release --repo-resolve-snapshots java-libs-snapshot --repo-deploy-snapshots java-libs-snapshot-local --repo-deploy-releases java-libs-release-local --use-wrapper=true
           jf docker login
-      - name: Compile with jfrog cli
-        run: jf mvn -B compile 
-      - name: Run tests with jfrog cli
-        run: jf mvn -B test
+      # Compile the code with JFrog CLI
+      - name: Compile
+        run: jf mvn -B compile --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      # Audit the code with JFrog Xray
+      - name: audit
+        run: jf audit --mvn --fail=true --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      # Run the tests with JFrog CLI
+      - name: test 
+        run: jf mvn -B test --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      # Authenticate the docker cli. is this needed??
       - name: Authenticate Docker
         uses: docker/login-action@v3
         with:
           registry: ${{ vars.JF_URL }}
           username: ${{ steps.setup-jfrog-cli.outputs.oidc-user }}
           password: ${{ steps.setup-jfrog-cli.outputs.oidc-token }}
-      - name: Build docker image with spring boot plugin
+      # Build the docker image with spring boot maven plugin
+      - name: docker_image
         run: |
           cat $HOME/.docker/config.json
-          jf mvn -B spring-boot:build-image -DskipTests
-      - name: Publish Image to JFrog Artifactory
+          jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      # Publish the artifact and docker image to JFrog Artifactory
+      - name: Publish
         env:
           IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
         run: |
-          jf mvn install -DskipTests
-          jf docker push $IMAGE_NAME
+          jf mvn install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf docker push $IMAGE_NAME --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      # Run JFrog Xray scan on the built artifact and docker image, and publish the build info to Artifactory
       - name: Run Jfrog
         run: |
-          jf audit --mvn
-          #jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=spring-petclinic --build-number=${{ github.run_id }}
-          jf docker scan $IMAGE_NAME
-          # Collect environment variables for the build
-          jf rt build-collect-env
-          # Collect VCS details from git and add them to the build
-          jf rt build-add-git
+          jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf docker scan $IMAGE_NAME --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
           # Publish build info
-          jf rt build-publish
+          jf rt build-publish $BUILD_NAME $BUILD_NUMBER --collect-env --collect-git-info --env-exclude "*password*;*secret*;*key*;*token*;*auth*"
