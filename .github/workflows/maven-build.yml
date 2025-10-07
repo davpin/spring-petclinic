@@ -59,7 +59,7 @@ jobs:
           jf docker login
       # Compile the code with JFrog CLI
       - name: Compile
-        run: jf mvn -B compile --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+        run: jf mvn -B compile --scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Audit the code with JFrog Xray
       - name: Audit
         run: jf audit --mvn --fail=true --licenses --sca --sast --use-wrapper=true -watches LicenseWatch
@@ -73,9 +73,11 @@ jobs:
           registry: ${{ vars.JF_URL }}
           username: ${{ steps.setup-jfrog-cli.outputs.oidc-user }}
           password: ${{ steps.setup-jfrog-cli.outputs.oidc-token }}
-      # Build the docker image with spring boot maven plugin
+      # Build the docker image with spring boot maven plugin and scan it with JFrog Xray
       - name: Docker_image
-        run: jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+        run: |
+          jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf docker scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Publish the artifact and docker image to JFrog Artifactory
       - name: Publish
         env:
@@ -89,7 +91,7 @@ jobs:
           JFROG_CLI_LOG_LEVEL: DEBUG
         run: |
           #jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf build-scan $BUILD_NAME $BUILD_NUMBER 
-          jf docker scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+           
           # Publish build info
           jf rt build-publish $BUILD_NAME $BUILD_NUMBER --collect-env --collect-git-info --env-exclude "*password*;*secret*;*key*;*token*;*auth*"
+          jf build-scan $BUILD_NAME $BUILD_NUMBER
