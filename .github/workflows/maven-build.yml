@@ -62,7 +62,7 @@ jobs:
         run: jf mvn -B compile --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Audit the code with JFrog Xray
       - name: Audit
-        run: jf audit --mvn --fail=true --licenses --sca --sast --use-wrapper=true
+        run: jf audit --mvn --fail=true --licenses --sca --sast --use-wrapper=true -watches LicenseWatch
       # Run the tests with JFrog CLI
       - name: Test 
         run: jf mvn -B test --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
@@ -89,6 +89,7 @@ jobs:
           JFROG_CLI_LOG_LEVEL: DEBUG
         run: |
           #jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf docker scan $IMAGE_NAME --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf build-scan $BUILD_NAME $BUILD_NUMBER --licenses
+          jf docker scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
           # Publish build info
           jf rt build-publish $BUILD_NAME $BUILD_NUMBER --collect-env --collect-git-info --env-exclude "*password*;*secret*;*key*;*token*;*auth*"
