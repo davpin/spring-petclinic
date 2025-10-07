@@ -77,14 +77,14 @@ jobs:
       - name: Docker_image
         run: |
           jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf docker scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf docker scan $IMAGE_NAME --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Publish the artifact and docker image to JFrog Artifactory
       - name: Publish
         env:
           IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
         run: |
           jf mvn install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf docker push $IMAGE_NAME --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf docker push --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER $IMAGE_NAME
       # Run JFrog Xray scan on the built artifact and docker image, and publish the build info to Artifactory
       - name: Run Jfrog
         env:
