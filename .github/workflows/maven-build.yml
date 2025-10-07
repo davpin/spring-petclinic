@@ -32,6 +32,9 @@ jobs:
           java-version: ${{matrix.java}}
           distribution: 'adopt'
           cache: maven
+      - name: Set Release version env variable
+        run: |
+          echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: jfrog/setup-jfrog-cli@v4
@@ -53,9 +56,6 @@ jobs:
         run: jf mvn -B test 
       - name: Build docker image with spring boot plugin
         run: jf mvn -B spring-boot:build-image -DskipTests
-      - name: Set Release version env variable
-        run: |
-          echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: Publish Image to JFrog Artifactory
         env:
           IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
@@ -64,8 +64,9 @@ jobs:
           jf docker push $IMAGE_NAME
       - name: Run Jfrog
         run: |
-          jf scan
-          jf docker scan
+          jf audit --mvn
+          jf scan target/spring-petclinic-*.jar --build-name=spring-petclinic --build-number=${{ github.run_id }}
+          jf docker scan $IMAGE_NAME
           # Collect environment variables for the build
           jf rt build-collect-env
           # Collect VCS details from git and add them to the build
