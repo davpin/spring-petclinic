@@ -61,8 +61,6 @@ jobs:
           username: ${{ steps.setup-jfrog-cli.outputs.oidc-user }}
           password: ${{ steps.setup-jfrog-cli.outputs.oidc-token }}
       - name: Build docker image with spring boot plugin
-        env:
-          DOCKER_CONTEXT: trialyin7lg.jfrog.io
         run: |
           cat $HOME/.docker/config.json
           jf mvn -B spring-boot:build-image -DskipTests
