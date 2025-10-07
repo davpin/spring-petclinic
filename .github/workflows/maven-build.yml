@@ -55,7 +55,10 @@ jobs:
       - name: Run tests with jfrog cli
         run: jf mvn -B test 
       - name: Build docker image with spring boot plugin
-        run: jf mvn -B spring-boot:build-image -DskipTests
+        run: |
+          cat $HOME/.docker/config.json
+          cat /home/runner/.docker/config.json
+          jf mvn -B spring-boot:build-image -DskipTests
       - name: Publish Image to JFrog Artifactory
         env:
           IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
