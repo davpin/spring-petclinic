@@ -246,6 +246,14 @@
              <name>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</name>
              <tags>trialyin7lg.jfrog.io/clinic-docker/${project.artifactId}:${project.version}</tags>
           </image>
+          <docker>
+            <builderRegistry>
+              <username>${steps.setup-jfrog-cli.outputs.oidc-user}</username>
+              <password>${steps.setup-jfrog-cli.outputs.oidc-token}</password>
+              <url>trialyin7lg.jfrog.io</url>
+              <email>davidfpinto@gmail.com</email>
+            </builderRegistry>
+          </docker>
         </configuration>
       </plugin>
       <plugin>
