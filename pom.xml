@@ -248,10 +248,7 @@
           </image>
           <docker>
             <builderRegistry>
-              <username>${steps.setup-jfrog-cli.outputs.oidc-user}</username>
-              <password>${steps.setup-jfrog-cli.outputs.oidc-token}</password>
-              <url>trialyin7lg.jfrog.io</url>
-              <email>davidfpinto@gmail.com</email>
+              <token>${steps.setup-jfrog-cli.outputs.oidc-token}</token>
             </builderRegistry>
           </docker>
         </configuration>
