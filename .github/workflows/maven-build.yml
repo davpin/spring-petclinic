@@ -65,7 +65,7 @@ jobs:
       - name: Run Jfrog
         run: |
           jf audit --mvn
-          jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=spring-petclinic --build-number=${{ github.run_id }}
+          #jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=spring-petclinic --build-number=${{ github.run_id }}
           jf docker scan $IMAGE_NAME
           # Collect environment variables for the build
           jf rt build-collect-env
