@@ -73,18 +73,41 @@ jobs:
           registry: ${{ vars.JF_URL }}
           username: ${{ steps.setup-jfrog-cli.outputs.oidc-user }}
           password: ${{ steps.setup-jfrog-cli.outputs.oidc-token }}
-      # Build the docker image with spring boot maven plugin and scan it with JFrog Xray
-      - name: Docker_image
+        
+       # Build jar 
+      - name: PackageJar
         run: |
-          jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf docker scan $IMAGE_NAME --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-      # Publish the artifact and docker image to JFrog Artifactory
-      - name: Publish
-        env:
-          IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
-        run: |
-          jf mvn install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-          jf docker push --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER $IMAGE_NAME
+          jf mvn -B install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ${{ vars.JF_URL }}
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v6        
+        with:
+          context: .
+          push: true
+          tags: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+      - name: Attest docker image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: oci://trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+#      # Build the docker image with spring boot maven plugin and scan it with JFrog Xray
+#      - name: Docker_image
+#        run: |
+#          jf mvn -B spring-boot:build-image -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+#          jf docker scan --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+#      # Publish the artifact and docker image to JFrog Artifactory
+#      - name: Publish
+#        env:
+#          IMAGE_NAME: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+#        run: |
+#          jf mvn install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+#          jf docker push --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER $IMAGE_NAME
       # Run JFrog Xray scan on the built artifact and docker image, and publish the build info to Artifactory
       - name: Run Jfrog
         env:
