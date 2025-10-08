@@ -16,6 +16,8 @@ permissions:
   contents: read
   # Required for uploading code scanning.
   security-events: write
+  # Required for attestations
+  attestations: write
 jobs:
   ci:
     env:
@@ -87,6 +89,15 @@ jobs:
           push: true
           tags: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
           build-args: VERSION=${{ env.RELEASE_VERSION }}
+      - name: docker scan
+        run: |  
+         jf docker pull trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+         jf docker scan trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+      # adding the built docker into the JFrog build info
+      - name: add docker package to build
+        run: |  
+          echo "trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}@${{ steps.build-and-push.outputs.digest }}" > metadata.json
+          jf rt build-docker-create clinic-docker --image-file metadata.json 
       - name: Attest docker image
         uses: actions/attest-build-provenance@v2
         with:
