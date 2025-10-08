@@ -68,10 +68,11 @@ jobs:
       # Run the tests with JFrog CLI
       - name: Test 
         run: jf mvn -B test --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-      # Build jar 
+      # Build jar and scan it.
       - name: PackageJar
         run: |
           jf mvn -B install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+          jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # Authenticate the docker cli. is this needed??
       - name: Authenticate Docker
         uses: docker/login-action@v3
@@ -91,17 +92,17 @@ jobs:
           build-args: VERSION=${{ env.RELEASE_VERSION }}
       - name: docker scan
         run: |  
-         jf docker pull trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
-         jf docker scan trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+         jf docker pull trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }} --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
+         jf docker scan trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }} --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       # adding the built docker into the JFrog build info
       - name: add docker package to build
         run: |  
           echo "trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}@${{ steps.build-and-push.outputs.digest }}" > metadata.json
-          jf rt build-docker-create clinic-docker --image-file metadata.json 
+          jf rt build-docker-create clinic-docker --image-file metadata.json --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       - name: Attest docker image
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: oci://trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+          subject-name: oci://trialyin7lg.jfrog.io/clinic-docker/spring-petclinic
           subject-digest: ${{ steps.build-and-push.outputs.digest }}
 #      # Build the docker image with spring boot maven plugin and scan it with JFrog Xray
 #      - name: Docker_image
@@ -120,8 +121,6 @@ jobs:
         env:
           JFROG_CLI_LOG_LEVEL: DEBUG
         run: |
-          #jf scan target/spring-petclinic-${{ env.RELEASE_VERSION }}.jar --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
-           
           # Publish build info
           jf rt build-publish $BUILD_NAME $BUILD_NUMBER --collect-env --collect-git-info --env-exclude "*password*;*secret*;*key*;*token*;*auth*"
           jf build-scan $BUILD_NAME $BUILD_NUMBER
