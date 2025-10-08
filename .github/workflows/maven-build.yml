@@ -83,7 +83,7 @@ jobs:
         with:
           buildkitd-config-inline: |
             [registry."docker.io"]
-              mirrors = ${{ vars.JF_URL }}
+              mirrors = ["trialyin7lg.jfrog.io"]}
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v6        
