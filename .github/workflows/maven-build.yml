@@ -87,7 +87,7 @@ jobs:
           push: true
           tags: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
           build-args: |
-            "VERSION=${{ env.RELEASE_VERSION }}"
+            VERSION=${{ env.RELEASE_VERSION }}
       - name: Attest docker image
         uses: actions/attest-build-provenance@v2
         with:
