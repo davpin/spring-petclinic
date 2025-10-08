@@ -80,10 +80,6 @@ jobs:
           jf mvn -B install -DskipTests --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          buildkitd-config-inline: |
-            [registry."docker.io"]
-              mirrors = ["trialyin7lg.jfrog.io"]}
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v6        
@@ -91,6 +87,8 @@ jobs:
           context: .
           push: true
           tags: trialyin7lg.jfrog.io/clinic-docker/spring-petclinic:${{ env.RELEASE_VERSION }}
+          build-args: |
+            VERSION=${{ env.RELEASE_VERSION }}
       - name: Attest docker image
         uses: actions/attest-build-provenance@v2
         with:
