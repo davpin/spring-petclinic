@@ -123,4 +123,4 @@ jobs:
         run: |
           # Publish build info
           jf rt build-publish $BUILD_NAME $BUILD_NUMBER --collect-env --collect-git-info --env-exclude "*password*;*secret*;*key*;*token*;*auth*"
-          jf build-scan $BUILD_NAME $BUILD_NUMBER
+          #jf build-scan $BUILD_NAME $BUILD_NUMBER
